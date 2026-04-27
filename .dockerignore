@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+.env.example
+.qodo/
+chroma_data/
+data/
+pipeline/
+rag/
+*.egg-info/
+.git/
+*.pt
+!yolov8n.pt

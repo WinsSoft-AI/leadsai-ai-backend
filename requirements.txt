@@ -1,0 +1,57 @@
+# _*_ coding: utf-8 _*_
+# ═══════════════════════════════════════════════════════════════════════════════
+# Leads AI — Python Dependencies for AI_Backend
+# Install: pip install -r requirements.txt
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# ── Web framework ─────────────────────────────────────────────────────────────
+fastapi==0.115.0
+uvicorn[standard]
+python-multipart==0.0.9           # file uploads
+websockets>=13.0                  # WebSocket support
+
+# ── PostgreSQL ────────────────────────────────────────────────────────────────
+asyncpg==0.29.0                   # async PostgreSQL driver
+
+# ── Environment / config ──────────────────────────────────────────────────────
+python-dotenv==1.0.1              # loads .env file
+
+# ── Validation ────────────────────────────────────────────────────────────────
+pydantic>=2.7.0,<3.0.0
+email-validator==2.2.0            # EmailStr validation in Pydantic
+
+# ── AI / Gemini ───────────────────────────────────────────────────────────────
+httpx>=0.28.1                   # async HTTP
+google-generativeai==0.7.2        # official SDK
+
+# ── Vector DB ─────────────────────────────────────────────────────────────────
+chromadb==0.5.5                           # RAG vector store
+
+# ── Document parsing (RAG ingestion) ─────────────────────────────────────────
+pypdf==4.3.1                      # PDF parsing
+python-docx==1.1.2                # DOCX parsing
+beautifulsoup4==4.12.3            # HTML parsing
+lxml==5.2.2                       # fast HTML/XML parser for BeautifulSoup
+markdown==3.6                     # Markdown → text
+
+# ── Local STT — Whisper ──────────────────────────────────────────────────────
+faster-whisper==1.0.3
+numpy
+
+# ── Local TTS ────────────────────────────────────────────────────────────────
+pyttsx3==2.90
+
+# ── Local CV — YOLO + CLIP ────────────────────────────────────────────────────
+ultralytics                       # YOLOv8 object detection
+open-clip-torch==2.26.1           # CLIP image embeddings
+Pillow==10.4.0                    # image processing
+
+# ── Utilities ─────────────────────────────────────────────────────────────────
+python-dateutil==2.9.0
+aiofiles==24.1.0                  # async file I/O
+
+faiss-cpu
+google-genai
+rank-bm25
+tldextract
+
