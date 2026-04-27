@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from cv_service import BehaviorAnalyzer, CVService
-from db_init import close_pool, get_pool, init_db
+from db import close_pool, get_pool, init_db
 from gemini_client import GeminiClient
 from models import BehaviorEvent
 from rag_engine import RAGEngine
