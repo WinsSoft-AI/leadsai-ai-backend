@@ -17,6 +17,7 @@ The only table the AI_Backend writes to is `ingest_jobs`
 
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 import logging
 import os
 import sys
@@ -34,7 +35,6 @@ try:
 except ImportError:
     logger.error("asyncpg not installed — run: pip install asyncpg")
     sys.exit(1)
-
 
 # ═════════════════════════════════════════════════════════════════════════════
 # DSN helper — strips SQLAlchemy prefix so asyncpg can use it directly
@@ -87,6 +87,27 @@ async def _init_conn(conn: asyncpg.Connection) -> None:
         schema="pg_catalog",
         format="text",
     )
+
+# ═════════════════════════════════════════════════════════════════════════════
+# TENANT SCHEMA HELPERS
+# ═════════════════════════════════════════════════════════════════════════════
+
+@asynccontextmanager
+async def tenant_conn(tenant_id: str):
+    """
+    Acquire a connection with search_path set to the tenant's schema.
+    Queries like 'SELECT * FROM sessions' resolve to t_{tenant_id}.sessions.
+    Queries like 'SELECT * FROM tenants' resolve to public.tenants.
+    search_path is reset on exit.
+    """
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        schema = f"t_{tenant_id}"
+        await conn.execute(f'SET search_path TO "{schema}", public')
+        try:
+            yield conn
+        finally:
+            await conn.execute("SET search_path TO public")
 
 
 # ═════════════════════════════════════════════════════════════════════════════

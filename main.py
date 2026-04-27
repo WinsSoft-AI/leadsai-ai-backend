@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from cv_service import BehaviorAnalyzer, CVService
-from db import close_pool, get_pool, init_db
+from db import close_pool, get_pool, init_db, tenant_conn
 from gemini_client import GeminiClient
 from models import BehaviorEvent
 from rag_engine import RAGEngine
@@ -316,7 +316,7 @@ async def _periodic_vector_refresh(app_instance: FastAPI):
             for tenant_row in tenants:
                 tid = tenant_row["id"]
                 try:
-                    chunks = await _build_structured_chunks(tid, pool)
+                    chunks = await _build_structured_chunks(tid)
                     await app_instance.state.rag.rebuild_structured(tid, chunks)
                     logger.info(f"  ✅ Refreshed tenant {tid}: {len(chunks)} chunks")
                 except Exception as e:
@@ -332,12 +332,12 @@ async def _periodic_vector_refresh(app_instance: FastAPI):
             await asyncio.sleep(60)  # Brief backoff on unexpected errors
 
 
-async def _build_structured_chunks(tenant_id: str, pool) -> List[Dict[str, Any]]:
+async def _build_structured_chunks(tenant_id: str) -> List[Dict[str, Any]]:
     """Build all structured KB chunks for a tenant from DB data."""
     import hashlib
     chunks = []
 
-    async with pool.acquire() as conn:
+    async with tenant_conn(tenant_id) as conn:
         # 1. Company data → one chunk per section
         company_rows = await conn.fetch(
             "SELECT section, field_key, field_value FROM kb_company_data "
@@ -428,11 +428,9 @@ async def rag_ingest(tenant_id: str = Form(...), file: UploadFile = File(...)):
     content = await file.read()
     if len(content) > MAX_INGEST_BYTES:
         raise HTTPException(status_code=413, detail=f"File too large (max {MAX_INGEST_BYTES // (1024*1024)} MB)")
-    pool = await get_pool()
     job_id = await app.state.rag.ingest(
         content=content, filename=file.filename,
-        content_type=file.content_type, tenant_id=tenant_id,
-        pool=pool
+        content_type=file.content_type, tenant_id=tenant_id
     )
     return {"job_id": job_id}
 

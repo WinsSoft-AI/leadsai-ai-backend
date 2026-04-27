@@ -19,6 +19,8 @@ import logging
 from typing import List, Dict, Any, Optional, Tuple
 from collections import defaultdict
 
+from db import tenant_conn
+
 logger = logging.getLogger(__name__)
 
 # ──────────────────────────────────────────────────────────────
@@ -516,7 +518,7 @@ class RAGEngine:
 
     # ── Ingest ────────────────────────────────────────────────
     async def ingest(self, content: bytes, filename: str,
-                     content_type: str, tenant_id: str, pool) -> str:
+                     content_type: str, tenant_id: str) -> str:
         job_id = uuid.uuid4().hex[:8]
         self._jobs[job_id] = {
             "job_id":         job_id,
@@ -525,22 +527,22 @@ class RAGEngine:
             "chunks_indexed": 0,
             "error":          None,
         }
-        async with pool.acquire() as conn:
+        async with tenant_conn(tenant_id) as conn:
             await conn.execute(
                 "INSERT INTO ingest_jobs (id, tenant_id, filename, file_size_bytes, status) VALUES ($1, $2, $3, $4, $5)",
                 job_id, tenant_id, filename, len(content), "processing"
             )
         asyncio.create_task(
-            self._ingest_task(job_id, content, filename, content_type, tenant_id, pool)
+            self._ingest_task(job_id, content, filename, content_type, tenant_id)
         )
         return job_id
 
-    async def _ingest_task(self, job_id, content, filename, content_type, tenant_id, pool):
+    async def _ingest_task(self, job_id, content, filename, content_type, tenant_id):
         try:
             text = self.parser.parse(content, filename, content_type)
             if not text.strip():
                 self._jobs[job_id].update(status="failed", error="No extractable text")
-                async with pool.acquire() as conn:
+                async with tenant_conn(tenant_id) as conn:
                     await conn.execute("UPDATE ingest_jobs SET status='failed', error_message=$1 WHERE id=$2", "No extractable text", job_id)
                 return
 
@@ -549,7 +551,7 @@ class RAGEngine:
                 c["id"] = f"{job_id}_{c['id']}"
             if not chunks:
                 self._jobs[job_id].update(status="failed", error="No chunks produced")
-                async with pool.acquire() as conn:
+                async with tenant_conn(tenant_id) as conn:
                     await conn.execute("UPDATE ingest_jobs SET status='failed', error_message=$1 WHERE id=$2", "No chunks produced", job_id)
                 return
 
@@ -570,14 +572,14 @@ class RAGEngine:
             self.bm25.index(tenant_id, all_chunks)
 
             self._jobs[job_id].update(status="completed", chunks_indexed=len(chunks))
-            async with pool.acquire() as conn:
+            async with tenant_conn(tenant_id) as conn:
                 await conn.execute("UPDATE ingest_jobs SET status='completed', chunks_indexed=$1, completed_at=NOW() WHERE id=$2", len(chunks), job_id)
             logger.info(f"✅ Ingested {filename}: {len(chunks)} chunks → tenant {tenant_id}")
 
         except Exception as e:
             logger.error(f"Ingest task failed: {e}", exc_info=True)
             self._jobs[job_id].update(status="failed", error=str(e))
-            async with pool.acquire() as conn:
+            async with tenant_conn(tenant_id) as conn:
                 await conn.execute("UPDATE ingest_jobs SET status='failed', error_message=$1 WHERE id=$2", str(e), job_id)
 
     # ── Retrieve ──────────────────────────────────────────────
