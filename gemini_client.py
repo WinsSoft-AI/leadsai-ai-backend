@@ -108,8 +108,15 @@ class GeminiClient:
         )
         
         # Add language instruction if not auto
-        if language != "auto":
-            system += f"\n\nIMPORTANT: Respond in language code: {language}"
+        if language and language != "auto":
+            _lang_names = {
+                'en':'English','hi':'Hindi','ta':'Tamil','te':'Telugu','bn':'Bengali',
+                'mr':'Marathi','gu':'Gujarati','kn':'Kannada','ml':'Malayalam','pa':'Punjabi',
+                'es':'Spanish','fr':'French','de':'German','pt':'Portuguese',
+                'ar':'Arabic','zh':'Chinese','ja':'Japanese','ko':'Korean','ru':'Russian','it':'Italian'
+            }
+            lang_name = _lang_names.get(language, language)
+            system += f"\n\nIMPORTANT: The user has selected '{lang_name}' as their preferred language. You MUST respond entirely in {lang_name}."
         
         payload = {
             "systemInstruction": {"parts": [{"text": system}]},
