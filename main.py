@@ -21,6 +21,7 @@ from models import BehaviorEvent
 from rag_engine import RAGEngine
 from stt_service import STTService
 from tts_service import TTSService
+from scraper import fetch_html, extract_body_text
 
 import asyncio
 import ipaddress
@@ -183,7 +184,7 @@ async def rag_rebuild(req: RebuildReq):
 @app.post("/internal/scrape/single", dependencies=[Depends(require_internal_token)])
 async def scrape_single_page(req: SingleScrapeReq):
     """Fetch one URL, extract clean body text — for product enrichment form pre-fill."""
-    from pipeline.scraper import fetch_html, extract_body_text
+    
     url = req.url.strip()
     if not url.startswith("http"):
         url = "https://" + url
