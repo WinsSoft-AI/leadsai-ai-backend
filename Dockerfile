@@ -27,8 +27,8 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY main.py db_init.py models.py gemini_client.py rag_engine.py \
-     stt_service.py tts_service.py cv_service.py ./
+COPY main.py db.py models.py gemini_client.py rag_engine.py \
+     stt_service.py tts_service.py cv_service.py scraper.py ./
 COPY yolov8n.pt ./
 
 RUN mkdir -p /app/chroma_data /app/data
