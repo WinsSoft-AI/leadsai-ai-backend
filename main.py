@@ -1,5 +1,5 @@
 """
-Winssoft BMA — AI_Backend (Worker Service)
+LeadsAI — AI_Backend (Worker Service)
 Hosts heavy computational services: RAG, Gemini, CV, STT, TTS.
 Exposes internal endpoints for the Main Backend (Orchestrator).
 """
@@ -104,7 +104,7 @@ async def lifespan(app: FastAPI):
     await close_pool()
 
 app = FastAPI(
-    title="Winssoft BMA_Backend",
+    title="LeadsAI-AI_Backend",
     version="3.1.0",
     description="Heavy worker service for AI computations",
     lifespan=lifespan,
