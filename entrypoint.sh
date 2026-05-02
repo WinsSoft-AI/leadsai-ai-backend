@@ -2,7 +2,7 @@
 set -e
 
 echo "Downloading .env from S3..."
-aws s3 cp s3://winssoft-leadsai/ai-b/.env /app/.env
+aws s3 cp s3://winssoft-leadsai-kms/ai-b/.env /app/.env
 
 echo "Loading environment variables..."
 while IFS= read -r line || [ -n "$line" ]; do
